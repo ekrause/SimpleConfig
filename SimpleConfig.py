@@ -13,7 +13,17 @@ class SimpleConfig(object):
 
 
 class SimpleConfigGroup(object):
-    def add_option(self, name, default, flag=None, help=None, action=None):
+    def __init__(self, name, description):
+        self.name = name
+        self.description = description
+        self.opts = []
+
+    def __iter__(self):
+        return self.opts.__iter__
+
+    def add_option(self, name, default, flag=None, msg=None, action=None):
+        self.opts.append(SimpleConfigOpt(name=name, default=default,
+            flag=flag, msg=msg, action=action))
         return
 
 
