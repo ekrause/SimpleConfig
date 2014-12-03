@@ -1,4 +1,4 @@
-#! usr/bin/env python
+#!/usr/bin/env python
 # pylint: disable=too-many-function-args,too-many-arguments
 
 class SimpleConfig(object):
