@@ -2,8 +2,27 @@
 # pylint: disable=too-many-function-args,too-many-arguments
 
 class SimpleConfig(object):
-    def add_group(self, name, description=None):
-        return
+    def __init__(self, name=None, msg=None, filename="config.ini"):
+        self.name = name
+        self.msg = msg
+        self.filename = filename
+
+        self.groups = []
+
+        self.defaults = {}
+
+    def _default_opts(self):
+        for group in self.groups:
+            group_dict = {}
+            for opt in group:
+                group_dict[opt.name] = opt.default
+            self.defaults[group.name] = group_dict
+        return self.defaults
+
+    def add_group(self, name, msg=None):
+        new_group = _SimpleConfigGroup(name, msg)
+        self.groups.append(new_group)
+        return new_group
 
     def make_configfile(self):
         return
