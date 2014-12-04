@@ -12,22 +12,22 @@ class SimpleConfig(object):
         return
 
 
-class SimpleConfigGroup(object):
+class _SimpleConfigGroup(object):
     def __init__(self, name, description):
         self.name = name
         self.description = description
         self.opts = []
 
     def __iter__(self):
-        return self.opts.__iter__
+        return iter(self.opts)
 
     def add_option(self, name, default, flag=None, msg=None, action=None):
-        self.opts.append(SimpleConfigOpt(name=name, default=default,
+        self.opts.append(_SimpleConfigOpt(name=name, default=default,
             flag=flag, msg=msg, action=action))
         return
 
 
-class SimpleConfigOpt(object):
+class _SimpleConfigOpt(object):
     def __init__(self, name, default, flag, msg, action):
         self.name = name
         self.default = default
