@@ -1,21 +1,44 @@
 #!/usr/bin/env python
-'''SimpleConfig is a unified interface for creating program defaults, config
-file settings, and command line arguments that all interact sanely with minimal
-effort.'''
+'''Unified command-line argument/config-file/program-defaults parsing library
+
+This module presents a common interface to a minimal set of features shared
+between argparse and ConfigParser.  Each option added using this module is
+settable via:
+    (1) command line arg
+    (2) config file setting
+and also has a (3) default value which is used when neither of the above
+methods are used to set it. The numbers correspond to the priority of each
+setting method, with (1) being the highest priority.  When parsed, the highest
+priority setting method detected will determine the final  value of a given
+option.
+
+The following is a simple usage example which creates two argument groups
+("general", and "input/output") each of which has a single argument ("foo" and
+"print", respectively).
+    parser = SimpleConfig.SimpleConfig()
+    general = parser.add_group(name="general")
+    general.add_option(name="foo", default=42)
+    io = parser.add_group("name="input/output")
+    io.add_option(name="print", default=False)
+
+    prog_options = parser.parse_config()
+
+    foo_value = prog_options['general']['foo']
+    print_enabled = prog_options['input/output']['print_enabled']
+'''
 
 # pylint: disable=too-many-function-args
 # pylint: disable=too-many-arguments
 # pylint: disable=too-few-public-methods
 
 class SimpleConfig(object):
-    '''Exposes the interface for working with SimpleConfig:
-    Public Methods:
-        add_group
+    '''Supplies most of the public interface for working with SimpleConfig,
+    including the following public methods:
+        add_group: TODO
 
-        parse_config
+        parse_config: TODO
 
-        make_configfile
-
+        make_configfile: TODO
         '''
 
     def __init__(self, name=None, msg=None, filename="config.ini"):
@@ -65,7 +88,11 @@ class SimpleConfig(object):
 
 class _SimpleConfigGroup(object):
     '''Container class to group multiple options together.  Each group will
-    be a separate entry in the config file and/or command line usage guide.'''
+    be a separate entry in the config file and/or command line usage guide.
+    Supplies the add_option method, which is part of the public interface,
+    despite belonging to a private helper class.
+
+    add_option: TODO'''
 
     def __init__(self, name, description):
         self.name = name
