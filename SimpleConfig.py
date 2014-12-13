@@ -31,6 +31,10 @@ The following is a simple usage example which creates two argument groups
 # pylint: disable=too-many-arguments
 # pylint: disable=too-few-public-methods
 
+from __future__ import print_function
+from ConfigParser import ConfigParser
+from types import BooleanType, IntType, FloatType
+
 class SimpleConfig(object):
     '''Supplies most of the public interface for working with SimpleConfig,
     including the following public methods:
@@ -46,18 +50,21 @@ class SimpleConfig(object):
         self.msg = msg
         self.filename = filename
 
-        self.groups = []
+        self.groups = {}
 
         self.defaults = {}
+
+        self.ConfigParser = ConfigParser()
+
+        self.ConfigParser.optionxform = str # causes case to be preserved
+        self.opts_ConfigParser = {}
 
     def _default_opts(self):
         '''Returns a dictionary of option groups, each group containing a
         dictionary of options and corresponding default values '''
 
         for group in self.groups:
-            group_dict = {}
-            for opt in group:
-                group_dict[opt.name] = opt.default
+            group_dict = {opt.name: opt.default for opt in group}
             self.defaults[group.name] = group_dict
         return self.defaults
 
@@ -66,15 +73,46 @@ class SimpleConfig(object):
         have a unique name'''
 
         new_group = _SimpleConfigGroup(name, msg)
-        self.groups.append(new_group)
+        self.groups[name] = new_group
         return new_group
+
+    def _get_ConfigParser_opts(self):
+
+        type_map = {
+            bool: self.ConfigParser.getboolean,
+            int: self.ConfigParser.getint,
+            float: self.ConfigParser.getfloat,
+            str: self.ConfigParser.get
+            }
+
+        self.ConfigParser.read(self.filename)
+
+        for section in self.ConfigParser.sections():
+            print("section = {}".format(section))
+            section_group = {}
+            for key, _ in self.ConfigParser.items(section):
+
+                # get original type of option
+                key_type = self.groups[section].opts[key].opt_type
+
+                section_group[key] = type_map[key_type](section, key)
+            self.opts_ConfigParser[section] = section_group
 
     def make_configfile(self):
         '''Creates a config file with each option group as a section, and
         each option name/value as a key/value pair, and writes the resulting
         file to disk'''
 
-        return
+        for group_key in self.groups:
+            group = self.groups[group_key]
+
+            self.ConfigParser.add_section(group.name)
+            for opt_key in group:
+                opt = group.opts[opt_key]
+                self.ConfigParser.set(group.name, opt.name, str(opt.default))
+
+        with open(self.filename, 'w') as outfile:
+            self.ConfigParser.write(outfile)
 
     def parse_config(self):
         '''Parses defaults, config file, and command line options and returns
@@ -97,7 +135,7 @@ class _SimpleConfigGroup(object):
     def __init__(self, name, description):
         self.name = name
         self.description = description
-        self.opts = []
+        self.opts = {}
 
     def __iter__(self):
         return iter(self.opts)
@@ -106,8 +144,8 @@ class _SimpleConfigGroup(object):
         '''Creates an option and adds it to the group.  At a minimum, the name
         and default value are required.'''
 
-        self.opts.append(_SimpleConfigOpt(name=name, default=default,
-            flag=flag, msg=msg, action=action, group=self.name))
+        self.opts[name] = _SimpleConfigOpt(name=name, default=default,
+            flag=flag, msg=msg, action=action, group=self.name)
         return
 
 
