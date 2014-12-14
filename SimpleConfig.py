@@ -33,7 +33,6 @@ The following is a simple usage example which creates two argument groups
 
 from __future__ import print_function
 from ConfigParser import ConfigParser
-from types import BooleanType, IntType, FloatType
 
 class SimpleConfig(object):
     '''Supplies most of the public interface for working with SimpleConfig,
@@ -45,6 +44,9 @@ class SimpleConfig(object):
         make_configfile: TODO
         '''
 
+    ###########################################################################
+    # Public Interface
+    ###########################################################################
     def __init__(self, name=None, msg=None, filename="config.ini"):
         self.name = name
         self.msg = msg
@@ -59,6 +61,42 @@ class SimpleConfig(object):
         self.ConfigParser.optionxform = str # causes case to be preserved
         self.opts_ConfigParser = {}
 
+    def add_group(self, name, msg=None):
+        '''Creates and returns a new option group.  every option group must
+        have a unique name'''
+
+        new_group = _SimpleConfigGroup(name, msg)
+        self.groups[name] = new_group
+        return new_group
+
+    def parse_config(self):
+        '''Parses defaults, config file, and command line options and returns
+        the result.  For each option specified:
+            - Setting via config file overrides default option value.
+            - Setting via command line overrides config file and default value.
+        The result is returned as a multi-level dictionary, with each option
+        group containing all its respective arguments as key/value pairs.'''
+        return
+
+    def make_configfile(self):
+        '''Creates a config file with each option group as a section, and
+        each option name/value as a key/value pair, and writes the resulting
+        file to disk'''
+
+        for group_key in self.groups:
+            group = self.groups[group_key]
+
+            self.ConfigParser.add_section(group.name)
+            for opt_key in group:
+                opt = group.opts[opt_key]
+                self.ConfigParser.set(group.name, opt.name, str(opt.default))
+
+        with open(self.filename, 'w') as outfile:
+            self.ConfigParser.write(outfile)
+
+    ###########################################################################
+    # Defaults
+    ###########################################################################
     def _default_opts(self):
         '''Returns a dictionary of option groups, each group containing a
         dictionary of options and corresponding default values '''
@@ -68,14 +106,9 @@ class SimpleConfig(object):
             self.defaults[group.name] = group_dict
         return self.defaults
 
-    def add_group(self, name, msg=None):
-        '''Creates and returns a new option group.  every option group must
-        have a unique name'''
-
-        new_group = _SimpleConfigGroup(name, msg)
-        self.groups[name] = new_group
-        return new_group
-
+    ###########################################################################
+    # ConfigParser
+    ###########################################################################
     def _get_ConfigParser_opts(self):
 
         type_map = {
@@ -98,31 +131,11 @@ class SimpleConfig(object):
                 section_group[key] = type_map[key_type](section, key)
             self.opts_ConfigParser[section] = section_group
 
-    def make_configfile(self):
-        '''Creates a config file with each option group as a section, and
-        each option name/value as a key/value pair, and writes the resulting
-        file to disk'''
-
-        for group_key in self.groups:
-            group = self.groups[group_key]
-
-            self.ConfigParser.add_section(group.name)
-            for opt_key in group:
-                opt = group.opts[opt_key]
-                self.ConfigParser.set(group.name, opt.name, str(opt.default))
-
-        with open(self.filename, 'w') as outfile:
-            self.ConfigParser.write(outfile)
-
-    def parse_config(self):
-        '''Parses defaults, config file, and command line options and returns
-        the result.  For each option specified:
-            - Setting via config file overrides default option value.
-            - Setting via command line overrides config file and default value.
-        The result is returned as a multi-level dictionary, with each option
-        group containing all its respective arguments as key/value pairs.'''
+    ###########################################################################
+    # argparse
+    ###########################################################################
+    def _get_argparse_opts(self):
         return
-
 
 class _SimpleConfigGroup(object):
     '''Container class to group multiple options together.  Each group will
