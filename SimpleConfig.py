@@ -33,6 +33,7 @@ The following is a simple usage example which creates two argument groups
 
 from __future__ import print_function
 from ConfigParser import ConfigParser
+from argparse import ArgumentParser
 
 class SimpleConfig(object):
     '''Supplies most of the public interface for working with SimpleConfig,
@@ -57,9 +58,11 @@ class SimpleConfig(object):
         self.defaults = {}
 
         self.ConfigParser = ConfigParser()
-
         self.ConfigParser.optionxform = str # causes case to be preserved
         self.opts_ConfigParser = {}
+
+        self.ArgParser = ArgumentParser(prog=self.name, description=self.msg)
+        self.opts_ArgParser = {}
 
     def add_group(self, name, msg=None):
         '''Creates and returns a new option group.  every option group must
@@ -101,9 +104,17 @@ class SimpleConfig(object):
         '''Returns a dictionary of option groups, each group containing a
         dictionary of options and corresponding default values '''
 
-        for group in self.groups:
-            group_dict = {opt.name: opt.default for opt in group}
+        for group_key in self.groups:
+            group = self.groups[group_key]
+
+            group_dict = {}
+
+            for opt_key in group:
+                opt = group.opts[opt_key]
+                group_dict[opt.name] = opt.default
+
             self.defaults[group.name] = group_dict
+            #group_dict = {opt.name: opt.default for opt in group}
         return self.defaults
 
     ###########################################################################
@@ -135,6 +146,7 @@ class SimpleConfig(object):
     # argparse
     ###########################################################################
     def _get_argparse_opts(self):
+        #for group_key in self.groups
         return
 
 class _SimpleConfigGroup(object):
