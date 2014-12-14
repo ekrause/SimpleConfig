@@ -44,6 +44,15 @@ class SimpleConfig(object):
 
         make_configfile: TODO
         '''
+    def _priority_opt(self, group, key):
+        default = self.defaults[group][key]
+        config = self.opts_ConfigParser[group][key]
+        cmdline = self.opts_ArgParser[group][key]
+
+        if config != default and cmdline == default:
+            return config
+        else:
+            return cmdline
 
     ###########################################################################
     # Public Interface
@@ -71,14 +80,34 @@ class SimpleConfig(object):
         self.groups[name] = new_group
         return new_group
 
-    def parse_config(self):
+    def parse_options(self):
         '''Parses defaults, config file, and command line options and returns
         the result.  For each option specified:
             - Setting via config file overrides default option value.
             - Setting via command line overrides config file and default value.
         The result is returned as a multi-level dictionary, with each option
         group containing all its respective arguments as key/value pairs.'''
-        return
+
+        self._get_default_opts()
+        self._get_ConfigParser_opts()
+        self._get_argparse_opts()
+        print("defaults:\n"+repr(self.defaults))
+        print("config:\n"+repr(self.opts_ConfigParser))
+        print("cmdline:\n"+repr(self.opts_ArgParser))
+        parsed_opts = {}
+
+        for group_key in self.groups:
+            group = self.groups[group_key]
+
+            group_dict = {}
+
+            for opt_key in group:
+                opt = group.opts[opt_key]
+                group_dict[opt.name] = self._priority_opt(group_key, opt_key)
+
+            parsed_opts[group.name] = group_dict
+            #group_dict = {opt.name: opt.default for opt in group}
+        return parsed_opts
 
     def make_configfile(self):
         '''Creates a config file with each option group as a section, and
