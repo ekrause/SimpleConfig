@@ -100,7 +100,7 @@ class SimpleConfig(object):
     ###########################################################################
     # Defaults
     ###########################################################################
-    def _default_opts(self):
+    def _get_default_opts(self):
         '''Returns a dictionary of option groups, each group containing a
         dictionary of options and corresponding default values '''
 
@@ -115,7 +115,6 @@ class SimpleConfig(object):
 
             self.defaults[group.name] = group_dict
             #group_dict = {opt.name: opt.default for opt in group}
-        return self.defaults
 
     ###########################################################################
     # ConfigParser
@@ -132,7 +131,6 @@ class SimpleConfig(object):
         self.ConfigParser.read(self.filename)
 
         for section in self.ConfigParser.sections():
-            print("section = {}".format(section))
             section_group = {}
             for key, _ in self.ConfigParser.items(section):
 
@@ -157,9 +155,9 @@ class _SimpleConfigGroup(object):
 
     add_option: TODO'''
 
-    def __init__(self, name, description):
+    def __init__(self, name, msg):
         self.name = name
-        self.description = description
+        self.msg = msg
         self.opts = {}
 
     def __iter__(self):
