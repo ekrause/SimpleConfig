@@ -48,8 +48,7 @@ class SimpleConfig(object):
     ###########################################################################
     # Public Interface
     ###########################################################################
-    def __init__(self, name=None, msg=None, filename="config.ini"):
-        self.name = name
+    def __init__(self, msg=None, filename="config.ini"):
         self.msg = msg
         self.filename = filename
 
@@ -61,7 +60,7 @@ class SimpleConfig(object):
         self.ConfigParser.optionxform = str # causes case to be preserved
         self.opts_ConfigParser = {}
 
-        self.ArgParser = ArgumentParser(prog=self.name, description=self.msg)
+        self.ArgParser = ArgumentParser(description=self.msg)
         self.opts_ArgParser = {}
 
     def add_group(self, name, msg=None):
