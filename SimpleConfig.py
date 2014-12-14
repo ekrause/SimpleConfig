@@ -145,7 +145,35 @@ class SimpleConfig(object):
     ###########################################################################
     def _get_argparse_opts(self):
         #for group_key in self.groups
-        return
+        for group_key in self.groups:
+            group = self.groups[group_key]
+
+            arg_group = self.ArgParser.add_argument_group(
+                title=group.name, description=group.msg)
+
+            for opt_key in group:
+                opt = group.opts[opt_key]
+
+                if opt.flag:
+                    arg_group.add_argument("--" + opt.name, "-" + opt.flag,
+                        default=opt.default, help=opt.msg, action=opt.action)
+
+                else:
+                    arg_group.add_argument("--" + opt.name,
+                        default=opt.default, help=opt.msg, action=opt.action)
+
+        cl_args = self.ArgParser.parse_args().__dict__
+
+        # cl_args is a flattened dictionary, now to restore groups to it:
+        for group_key in self.groups:
+            group = self.groups[group_key]
+
+            group_dict = {}
+
+            for opt_key in group:
+                group_dict[opt_key] = cl_args[opt_key]
+
+            self.opts_ArgParser[group.name] = group_dict
 
 class _SimpleConfigGroup(object):
     '''Container class to group multiple options together.  Each group will
