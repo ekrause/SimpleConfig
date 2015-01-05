@@ -30,6 +30,7 @@ The following is a simple usage example which creates two argument groups
 # pylint: disable=too-many-function-args
 # pylint: disable=too-many-arguments
 # pylint: disable=too-few-public-methods
+# pylint: disable=too-many-instance-attributes
 
 from __future__ import print_function
 from ConfigParser import ConfigParser
@@ -45,11 +46,15 @@ class SimpleConfig(object):
         make_configfile: TODO
         '''
     def _priority_opt(self, group, key):
-        default = self.defaults[group][key]
-        config = self.opts_ConfigParser[group][key]
-        cmdline = self.opts_ArgParser[group][key]
+        default = self.opts_defaults[group][key]
+        try:
+            config = self.opts_config[group][key]
+        except KeyError:
+            config = None
 
-        if config != default and cmdline == default:
+        cmdline = self.opts_argparser[group][key]
+
+        if config and config != default and cmdline == default:
             return config
         else:
             return cmdline
@@ -63,14 +68,14 @@ class SimpleConfig(object):
 
         self.groups = {}
 
-        self.defaults = {}
+        self.opts_defaults = {}
 
-        self.ConfigParser = ConfigParser()
-        self.ConfigParser.optionxform = str # causes case to be preserved
-        self.opts_ConfigParser = {}
+        self.configparser = ConfigParser()
+        self.configparser.optionxform = str # causes case to be preserved
+        self.opts_config = {}
 
-        self.ArgParser = ArgumentParser(description=self.msg)
-        self.opts_ArgParser = {}
+        self.argparser = ArgumentParser(description=self.msg)
+        self.opts_argparser = {}
 
     def add_group(self, name, msg=None):
         '''Creates and returns a new option group.  every option group must
@@ -89,11 +94,8 @@ class SimpleConfig(object):
         group containing all its respective arguments as key/value pairs.'''
 
         self._get_default_opts()
-        self._get_ConfigParser_opts()
+        self._get_configparser_opts()
         self._get_argparse_opts()
-        print("defaults:\n"+repr(self.defaults))
-        print("config:\n"+repr(self.opts_ConfigParser))
-        print("cmdline:\n"+repr(self.opts_ArgParser))
         parsed_opts = {}
 
         for group_key in self.groups:
@@ -117,13 +119,13 @@ class SimpleConfig(object):
         for group_key in self.groups:
             group = self.groups[group_key]
 
-            self.ConfigParser.add_section(group.name)
+            self.configparser.add_section(group.name)
             for opt_key in group:
                 opt = group.opts[opt_key]
-                self.ConfigParser.set(group.name, opt.name, str(opt.default))
+                self.configparser.set(group.name, opt.name, str(opt.default))
 
         with open(self.filename, 'w') as outfile:
-            self.ConfigParser.write(outfile)
+            self.configparser.write(outfile)
 
     ###########################################################################
     # Defaults
@@ -141,32 +143,32 @@ class SimpleConfig(object):
                 opt = group.opts[opt_key]
                 group_dict[opt.name] = opt.default
 
-            self.defaults[group.name] = group_dict
+            self.opts_defaults[group.name] = group_dict
             #group_dict = {opt.name: opt.default for opt in group}
 
     ###########################################################################
-    # ConfigParser
+    # configparser
     ###########################################################################
-    def _get_ConfigParser_opts(self):
+    def _get_configparser_opts(self):
 
         type_map = {
-            bool: self.ConfigParser.getboolean,
-            int: self.ConfigParser.getint,
-            float: self.ConfigParser.getfloat,
-            str: self.ConfigParser.get
+            bool: self.configparser.getboolean,
+            int: self.configparser.getint,
+            float: self.configparser.getfloat,
+            str: self.configparser.get
             }
 
-        self.ConfigParser.read(self.filename)
+        self.configparser.read(self.filename)
 
-        for section in self.ConfigParser.sections():
+        for section in self.configparser.sections():
             section_group = {}
-            for key, _ in self.ConfigParser.items(section):
+            for key, _ in self.configparser.items(section):
 
                 # get original type of option
                 key_type = self.groups[section].opts[key].opt_type
 
                 section_group[key] = type_map[key_type](section, key)
-            self.opts_ConfigParser[section] = section_group
+            self.opts_config[section] = section_group
 
     ###########################################################################
     # argparse
@@ -176,7 +178,7 @@ class SimpleConfig(object):
         for group_key in self.groups:
             group = self.groups[group_key]
 
-            arg_group = self.ArgParser.add_argument_group(
+            arg_group = self.argparser.add_argument_group(
                 title=group.name, description=group.msg)
 
             for opt_key in group:
@@ -190,7 +192,7 @@ class SimpleConfig(object):
                     arg_group.add_argument("--" + opt.name,
                         default=opt.default, help=opt.msg, action=opt.action)
 
-        cl_args = self.ArgParser.parse_args().__dict__
+        cl_args = self.argparser.parse_args().__dict__
 
         # cl_args is a flattened dictionary, now to restore groups to it:
         for group_key in self.groups:
@@ -201,7 +203,7 @@ class SimpleConfig(object):
             for opt_key in group:
                 group_dict[opt_key] = cl_args[opt_key]
 
-            self.opts_ArgParser[group.name] = group_dict
+            self.opts_argparser[group.name] = group_dict
 
 class _SimpleConfigGroup(object):
     '''Container class to group multiple options together.  Each group will
